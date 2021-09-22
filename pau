@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function _pau_die {
-    [[ -z "$1" ]] || echo $1
+    [[ -z "$1" ]] || echo "$1"
     exit 1
 }
 
@@ -30,74 +30,118 @@ USAGE
 }
 
 function _pau_shim {
-    NAME=$1
-    APPDIR=$2
-    SHIM=~/.local/pau/shims/$NAME
-    mkdir -p ~/.local/pau/shims
+    [[ -z "$1" ]] && _pau_die "ERROR: an app name is required"
 
-    cat <<EOF >$SHIM
+    echo -n "# Creating shim... "
+
+    NAME=$1
+
+    APPDIR="$HOME/.local/pau/apps/$NAME"
+    SHIM="$HOME/.local/pau/shims/$NAME"
+
+    mkdir -p "$HOME/.local/pau/shims"
+
+    cat <<EOF > "$SHIM"
 #!/bin/bash
 export PATH=$APPDIR/bin:$PATH
 export PERL5LIB=$APPDIR/lib/perl5
 exec $PERL $APPDIR/bin/$NAME "\$@"
 EOF
-    chmod +x $SHIM
 
-    ln -s $SHIM ~/.local/bin/$NAME
+    chmod +x "$SHIM"
+
+    echo "DONE"
 }
 
-function _pau_install_app_from_dist {
+function _pau_link {
     [[ -z "$1" ]] && _pau_die "ERROR: an app name is required"
-    [[ -z "$2" ]] && _pau_die "ERROR: an dist name is required"
+
+    echo -n "# Creating link..."
 
     NAME=$1
-    DIST=$2
+    SHIM="$HOME/.local/pau/shims/$NAME"
+    LINK="$HOME/.local/bin/$NAME"
 
-    [[ -f ~/.local/pau/shims/$NAME ]] && _pau_die "ERROR: $NAME already exists."
+    ln -s "$SHIM" "$LINK" || _pau_die "ERROR: Failed to create links to shim"
 
-    APPDIR=~/.local/pau/installations/$NAME
-
-    [[ -d $APPDIR ]] && _pau_die "ERROR: $NAME already exists."
-
-    cpm install -L $APPDIR $DIST \
-        && _pau_shim $NAME $APPDIR
+    echo "DONE"
 }
 
-function _pau_install {
-    DIST=
+function _pau_inject_dist {
+    local DIST APPDIR
+
+    [[ -z "$1" ]] && _pau_die "ERROR: an dist name is required"
+    [[ -z "$2" ]] && _pau_die "ERROR: an appdir is required"
+
+    DIST=$1
+    APPDIR=$2
+
+    echo -n "# Injecting $DIST... "
+    cpm install -L "$APPDIR" "$DIST" >/dev/null 2>&1 || _pau_die
+    echo "DONE"
+}
+
+function _pau_cmd_install {
+    DISTS=()
 
     local OPTIND o
     while getopts M: o; do
           case "$o" in
               M)
-                  DIST=$OPTARG
+                  DISTS+=("$OPTARG")
                   ;;
               *)
-                  echo $OPTARG XXX
+                  _pau_die "Unknown option: $OPTARG"
                   ;;
           esac
     done
 
     shift $((OPTIND-1))
+
     NAME=$1
+
     [[ -z "$NAME" ]] && _pau_die "ERROR: an app name is required."
-    [[ -z "$DIST" ]] && DIST=App::$NAME
+    [[ ${#DISTS} -eq 0 ]] && DISTS=("App::$NAME")
 
-    _pau_install_app_from_dist $NAME $DIST
+    [[ -e "$HOME/.local/bin/$NAME" ]] && _pau_die "ERROR: $HOME/.local/bin/$NAME already exists."
+    [[ -f "$HOME/.local/pau/shims/$NAME" ]] && _pau_die "ERROR: $NAME already exists."
+
+    APPDIR="$HOME/.local/pau/apps/$NAME"
+
+    [[ -d "$APPDIR" ]] && _pau_die "ERROR: $NAME already exists."
+
+    echo "# Making the appdir for $NAME"
+    mkdir -p "$APPDIR"
+
+    for dist in "${DISTS[@]}"
+    do
+        _pau_inject_dist "$dist" "$APPDIR" || _pau_die "Failed to inject $dist"
+    done
+
+    _pau_shim "$NAME"
+    _pau_link "$NAME"
+
+    echo "# $NAME is successfully installed"
 }
 
-function _pau_delete {
+function _pau_cmd_delete {
     NAME=$1
-    APPDIR=~/.local/pau/installations/$NAME
-    SHIM=~/.local/pau/shims/$NAME
+    APPDIR="$HOME/.local/pau/apps/$NAME"
+    SHIM="$HOME/.local/pau/shims/$NAME"
+    LINK="$HOME/.local/bin/$NAME"
 
-    rm ~/.local/bin/$NAME
-    rm $SHIM
-    rm -rf $APPDIR
+    [[ -d $APPDIR ]] || _pau_die "ERROR: $APPDIR does not exists."
+    [[ -f $SHIM ]] || _pau_die "ERROR: $SHIM does not exists."
+    [[ -L $LINK ]] || _pau_die "ERROR: $LINK is not managed by pau"
+    [[ $(readlink "$LINK") == "$SHIM" ]] || _pau_die "ERROR: $LINK is not managed by pau"
+
+    rm "$LINK"
+    rm "$SHIM"
+    rm -rf "$APPDIR"
 }
 
-function _pau_list {
-    \ls -1 ~/.local/pau/installations/
+function _pau_cmd_list {
+    \ls -1 ~/.local/pau/apps/
 }
 
 function _pau_main {
@@ -107,17 +151,20 @@ function _pau_main {
     case $1 in
         install)
             shift
-            _pau_install "$@"
+            _pau_cmd_install "$@"
+            hash -r
             ;;
         delete)
             shift
-            _pau_delete "$@"
+            _pau_cmd_delete "$@"
+            hash -r
             ;;
         list)
             shift
-            _pau_list
+            _pau_cmd_list
             ;;
         *)
+            echo "Unknown command: $OPTARG"
             _pau_usage
             ;;
     esac
