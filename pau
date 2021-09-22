@@ -1,5 +1,10 @@
 #!/bin/bash
 
+function _pau_die {
+    [[ -z "$1" ]] || echo $1
+    exit 1
+}
+
 function _pau_usage() {
     cat <<USAGE
 
@@ -12,8 +17,8 @@ Example:
     # ditto for perlfind from App::perlfind
     pau install perlfind
 
-    # TODO: Installs mbtiny from App::ModuleBuildTiny
-    pau install mbtiny -M App::ModuleBuildTiny
+    # Installs mbtiny from App::ModuleBuildTiny
+    pau install -M App::ModuleBuildTiny mbtiny
 
     # List installed units
     pau list
@@ -37,16 +42,47 @@ export PERL5LIB=$APPDIR/lib/perl5
 exec $PERL $APPDIR/bin/$NAME "\$@"
 EOF
     chmod +x $SHIM
+
     ln -s $SHIM ~/.local/bin/$NAME
 }
 
-function _pau_install_app_conventional {
+function _pau_install_app_from_dist {
+    [[ -z "$1" ]] && _pau_die "ERROR: an app name is required"
+    [[ -z "$2" ]] && _pau_die "ERROR: an dist name is required"
+
     NAME=$1
+    DIST=$2
+
+    [[ -f ~/.local/pau/bin/$NAME ]] && _pau_die "ERROR: $NAME already exists."
+
     APPDIR=~/.local/pau/installations/$NAME
 
-    cpm install -L $APPDIR App::$NAME
+    cpm install -L $APPDIR $DIST
 
     _pau_shim $NAME $APPDIR
+}
+
+function _pau_install {
+    DIST=
+
+    local OPTIND o
+    while getopts M: o; do
+          case "$o" in
+              M)
+                  DIST=$OPTARG
+                  ;;
+              *)
+                  echo $OPTARG XXX
+                  ;;
+          esac
+    done
+
+    shift $((OPTIND-1))
+    NAME=$1
+    [[ -z "$NAME" ]] && _pau_die "ERROR: an app name is required."
+    [[ -z "$DIST" ]] && DIST=App::$NAME
+
+    _pau_install_app_from_dist $NAME $DIST
 }
 
 function _pau_delete {
@@ -70,13 +106,14 @@ function _pau_main {
     case $1 in
         install)
             shift
-            _pau_install_app_conventional "$@"
+            _pau_install "$@"
             ;;
         delete)
             shift
             _pau_delete "$@"
             ;;
         list)
+            shift
             _pau_list
             ;;
         *)
