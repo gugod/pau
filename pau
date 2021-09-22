@@ -1,0 +1,78 @@
+#!/bin/bash
+
+function _pau_usage() {
+    cat <<USAGE
+
+Example:
+
+    # Installs ccdiff from App::ccdiff to a self-contained local::lib directory,
+    # then expose ccdiff to ~/.local/bin/ccdiff
+    pau install ccdiff
+
+    # ditto for perlfind from App::perlfind
+    pau install perlfind
+
+    # TODO: Installs mbtiny from App::ModuleBuildTiny
+    pau install -o mbtiny -M App::ModuleBuildTiny
+
+    # Deletes perlfind
+    pau delete perlfind
+
+USAGE
+}
+
+function _pau_shim {
+    NAME=$1
+    APPDIR=$2
+    SHIM=~/.local/pau/shims/$NAME
+    mkdir -p ~/.local/pau/shims
+
+    cat <<EOF >$SHIM
+#!/bin/bash
+export PATH=$APPDIR/bin:$PATH
+export PERL5LIB=$APPDIR/lib/perl5
+exec $PERL $APPDIR/bin/$NAME "\$@"
+EOF
+    chmod +x $SHIM
+    ln -s $SHIM ~/.local/bin/$NAME
+}
+
+function _pau_install_app_conventional {
+    NAME=$1
+    APPDIR=~/.local/pau/installations/$NAME
+
+    cpm install -L $APPDIR App::$NAME
+
+    _pau_shim $NAME $APPDIR
+}
+
+function _pau_delete {
+    NAME=$1
+    APPDIR=~/.local/pau/installations/$NAME
+    SHIM=~/.local/pau/shims/$NAME
+
+    rm ~/.local/bin/$NAME
+    rm $SHIM
+    rm -rf $APPDIR
+}
+
+function _pau_main {
+    # main
+    PERL=$(which perl)
+
+    case $1 in
+        install)
+            shift
+            _pau_install_app_conventional "$@"
+            ;;
+        delete)
+            shift
+            _pau_delete "$@"
+            ;;
+        *)
+            _pau_usage
+            ;;
+    esac
+}
+
+_pau_main "$@"
