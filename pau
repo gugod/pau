@@ -13,7 +13,10 @@ Example:
     pau install perlfind
 
     # TODO: Installs mbtiny from App::ModuleBuildTiny
-    pau install -o mbtiny -M App::ModuleBuildTiny
+    pau install mbtiny -M App::ModuleBuildTiny
+
+    # List installed units
+    pau list
 
     # Deletes perlfind
     pau delete perlfind
@@ -56,6 +59,10 @@ function _pau_delete {
     rm -rf $APPDIR
 }
 
+function _pau_list {
+    \ls -1 ~/.local/pau/installations/
+}
+
 function _pau_main {
     # main
     PERL=$(which perl)
@@ -68,6 +75,9 @@ function _pau_main {
         delete)
             shift
             _pau_delete "$@"
+            ;;
+        list)
+            _pau_list
             ;;
         *)
             _pau_usage
