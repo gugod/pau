@@ -16,18 +16,22 @@ under `~/.local/bin`.
 
 # installation
 
-Ensure that `~/.local/bin` is in `$PATH`
+Here's a quick installer:
 
-Save `pau` under `~/.local/bin`
+    curl -fsSL https://github.com/gugod/pau/raw/fun/pau > ~/.local/bin/pau \
+        && chmod +x ~/.local/bin/pau
+    [ ! -e  ~/.local/bin/cpm ]
+        && curl -fsSL https://git.io/cpm > ~/.local/bin/cpm \
+        && chmod +x  ~/.local/bin/cpm
 
-If you don't already have `cpm` around, you could easily grab the
-self-contained version and put it under `~/.local/bin` by doing these:
+Then, ensure that `~/.local/bin` is in `$PATH`.
 
-    curl -fsSL --compressed https://git.io/cpm > ~/.local/bin/cpm
-    chmod +x  ~/.local/bin/cpm
+The second command of the installer is installing `cpm` to
+`~/.local/bin`. This command may be skipped if there is already a
+`cpm` in `$PATH`.
 
 For `perl`, as long as there is one in `$PATH` and discoverable by
-doing `which perl`, it is ok. That would be the one used to run the
+doing `which perl`, it'll be ok. That would be the one used to run the
 apps installed via `pau`.
 
 # usage examples
@@ -41,7 +45,8 @@ To install `mbtiny` from `App::ModuleBuildTiny`
 
     pau install -M App::ModuleBuildTiny mbtiny
 
-To install `dzil` from `Dist::Zilla` with `Dist::Zilla::Plugin::Git` plugin "bundled" together
+To install `dzil` from `Dist::Zilla` with `Dist::Zilla::Plugin::Git`
+plugin "bundled" together:
 
     pau install -M Dist::Zilla -M Dist::Zilla::Plugin::Git dzil
 
