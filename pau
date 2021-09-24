@@ -145,6 +145,7 @@ function _pau_cmd_list {
 }
 
 function _pau_main {
+    cmd=$1
     # main
     PERL=$(which perl)
 
@@ -163,9 +164,11 @@ function _pau_main {
             shift
             _pau_cmd_list
             ;;
-        *)
-            echo "Unknown command: $OPTARG"
+        -h|help|"")
             _pau_usage
+            ;;
+        *)
+            echo "Unknown command: $1"
             ;;
     esac
 }
