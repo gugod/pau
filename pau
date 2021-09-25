@@ -144,12 +144,38 @@ function _pau_cmd_list {
     \ls -1 ~/.local/pau/apps/
 }
 
+function _pau_cmd_pp {
+    NAME=$1
+    shift
+
+    local OPTIND OPT output
+    while getopts o: OPT; do
+          case "$OPT" in
+              o)
+                  output="$OPTARG"
+                  ;;
+              *)
+                  _pau_die "Unknown option: $OPTARG"
+                  ;;
+          esac
+    done
+
+    [[ -z "$output" ]] && output=$NAME
+
+    perlversion=$(perl -MConfig -e 'print $Config{version}')
+    pp  -I "$HOME/.local/pau/apps/$NAME/lib/perl5" \
+        -a "$HOME/.local/pau/apps/$NAME/lib/perl5/;$perlversion/" \
+        -o "$output" \
+        "$HOME/.local/pau/apps/$NAME/bin/$NAME" \
+        && echo "DONE: $output"
+}
+
 function _pau_main {
     cmd=$1
     # main
     PERL=$(which perl)
 
-    case $1 in
+    case $cmd in
         install)
             shift
             _pau_cmd_install "$@"
@@ -163,6 +189,10 @@ function _pau_main {
         list)
             shift
             _pau_cmd_list
+            ;;
+        pp)
+            shift
+            _pau_cmd_pp "$@"
             ;;
         -h|help|"")
             _pau_usage
