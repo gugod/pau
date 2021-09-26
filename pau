@@ -145,6 +145,8 @@ function _pau_cmd_list {
 }
 
 function _pau_cmd_pp {
+    which pp >/dev/null 2>&1 || _pau_die "Not found: pp. This command depends on pp from PAR::Pacaker."
+
     NAME=$1
     shift
 
