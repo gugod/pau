@@ -156,10 +156,15 @@ function _pau_cmd_install {
 }
 
 function _pau_cmd_delete {
-    NAME=$1
-    APPDIR="$HOME/.local/pau/apps/$NAME"
-    SHIM="$HOME/.local/pau/shims/$NAME"
-    LINK="$HOME/.local/bin/$NAME"
+    local APP APPDIR SHIM LINK
+
+    APP=$1
+
+    [[ -z "$APP" ]] && _pau_die "ERROR: an app name is required"
+
+    APPDIR="$HOME/.local/pau/apps/$APP"
+    SHIM="$HOME/.local/pau/shims/$APP"
+    LINK="$HOME/.local/bin/$APP"
 
     [[ -d $APPDIR ]] || _pau_die "ERROR: $APPDIR does not exists."
     [[ -f $SHIM ]] || _pau_die "ERROR: $SHIM does not exists."
