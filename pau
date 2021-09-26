@@ -183,7 +183,7 @@ function _pau_main {
             _pau_cmd_install "$@"
             hash -r
             ;;
-        delete)
+        delete|uninstall)
             shift
             _pau_cmd_delete "$@"
             hash -r
