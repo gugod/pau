@@ -68,17 +68,33 @@ function _pau_link {
 }
 
 function _pau_inject_dist {
-    local DIST APPDIR
+    local APP DIST APPDIR
 
-    [[ -z "$1" ]] && _pau_die "ERROR: an dist name is required"
-    [[ -z "$2" ]] && _pau_die "ERROR: an appdir is required"
+    [[ -z "$1" ]] && _pau_die "ERROR: an app name is required"
+    [[ -z "$2" ]] && _pau_die "ERROR: an dist name is required"
 
-    DIST=$1
-    APPDIR=$2
+    APP=$1
+    DIST=$2
+
+    APPDIR="$HOME/.local/pau/apps/$APP"
 
     echo -n "# Injecting $DIST... "
     cpm install -L "$APPDIR" "$DIST" >/dev/null 2>&1 || _pau_die
     echo "DONE"
+}
+
+function _pau_cmd_inject {
+    local APP DIST
+    [[ -z "$1" ]] && _pau_die "ERROR: an app name is required"
+    [[ -z "$2" ]] && _pau_die "ERROR: at least one dist name is required"
+
+    APP=$1
+    shift
+
+    for DIST in "$@"
+    do
+        _pau_inject_dist "$APP" "$DIST"
+    done
 }
 
 function _pau_cmd_install {
@@ -115,7 +131,7 @@ function _pau_cmd_install {
 
     for dist in "${DISTS[@]}"
     do
-        _pau_inject_dist "$dist" "$APPDIR" || _pau_die "Failed to inject $dist"
+        _pau_inject_dist "$NAME" "$dist" || _pau_die "Failed to inject $dist"
     done
 
     _pau_shim "$NAME"
@@ -187,6 +203,10 @@ function _pau_main {
             shift
             _pau_cmd_delete "$@"
             hash -r
+            ;;
+        inject)
+            shift
+            _pau_cmd_inject "$@"
             ;;
         list)
             shift
