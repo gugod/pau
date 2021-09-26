@@ -181,31 +181,34 @@ function _pau_cmd_list {
 }
 
 function _pau_cmd_pp {
+    local APP APPDIR OPTIND OPT output perlversion
+
     which pp >/dev/null 2>&1 || _pau_die "Not found: pp. This command depends on pp from PAR::Pacaker."
 
-    NAME=$1
+    APP=$1
+    [[ -z "$APP" ]] && _pau_die "ERROR: an app name is required"
+
     shift
 
-    local OPTIND OPT output
     while getopts o: OPT; do
-          case "$OPT" in
-              o)
-                  output="$OPTARG"
-                  ;;
-              *)
-                  _pau_die "Unknown option: $OPTARG"
-                  ;;
-          esac
+        case "$OPT" in
+            o)
+                output="$OPTARG"
+                ;;
+            *)
+                _pau_die "Unknown option: $OPTARG"
+                ;;
+        esac
     done
 
-    [[ -z "$output" ]] && output=$NAME
+    [[ -z "$output" ]] && output=$APP
 
-    APPDIR="$HOME/.local/pau/apps/$NAME"
+    APPDIR="$HOME/.local/pau/apps/$APP"
     perlversion=$("$APPDIR/bin/perl" -MConfig -e "print \$Config{version}")
     pp  -I "$APPDIR/lib/perl5" \
         -a "$APPDIR/lib/perl5/;$perlversion/" \
         -o "$output" \
-        "$APPDIR/bin/$NAME" \
+        "$APPDIR/bin/$APP" \
         && echo "DONE: $output"
 }
 
