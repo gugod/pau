@@ -45,7 +45,7 @@ function _pau_shim {
 #!/bin/bash
 export PATH=$APPDIR/bin:$PATH
 export PERL5LIB=$APPDIR/lib/perl5
-exec $PERL $APPDIR/bin/$NAME "\$@"
+exec $APPDIR/bin/perl $APPDIR/bin/$NAME "\$@"
 EOF
 
     chmod +x "$SHIM"
@@ -54,13 +54,15 @@ EOF
 }
 
 function _pau_link {
+    local APP SHIM LINK
+
     [[ -z "$1" ]] && _pau_die "ERROR: an app name is required"
 
     echo -n "# Creating link..."
 
-    NAME=$1
-    SHIM="$HOME/.local/pau/shims/$NAME"
-    LINK="$HOME/.local/bin/$NAME"
+    APP=$1
+    SHIM="$HOME/.local/pau/shims/$APP"
+    LINK="$HOME/.local/bin/$APP"
 
     ln -s "$SHIM" "$LINK" || _pau_die "ERROR: Failed to create links to shim"
 
@@ -97,10 +99,26 @@ function _pau_cmd_inject {
     done
 }
 
-function _pau_cmd_install {
-    DISTS=()
+function _pau_make_app_dir {
+    local APP APPDIR
+    APP=$1
+    APPDIR="$HOME/.local/pau/apps/$APP"
 
-    local OPTIND o
+    [[ -e "$APPDIR" ]] && _pau_die "ERROR: $APPDIR already exists."
+
+    echo "# Making the appdir for $NAME"
+    mkdir -p "$APPDIR"
+
+    mkdir -p "$APPDIR/bin/"
+    ln -s "$(which perl)" "$APPDIR/bin/perl"
+
+    echo -n "$APPDIR"
+}
+
+function _pau_cmd_install {
+    local APPDIR OPTIND DISTS o
+
+    DISTS=()
     while getopts M: o; do
           case "$o" in
               M)
@@ -117,17 +135,14 @@ function _pau_cmd_install {
     NAME=$1
 
     [[ -z "$NAME" ]] && _pau_die "ERROR: an app name is required."
+
     [[ ${#DISTS} -eq 0 ]] && DISTS=("App::$NAME")
+
+    APPDIR=$(_pau_make_app_dir "$NAME")
 
     [[ -e "$HOME/.local/bin/$NAME" ]] && _pau_die "ERROR: $HOME/.local/bin/$NAME already exists."
     [[ -f "$HOME/.local/pau/shims/$NAME" ]] && _pau_die "ERROR: $NAME already exists."
 
-    APPDIR="$HOME/.local/pau/apps/$NAME"
-
-    [[ -d "$APPDIR" ]] && _pau_die "ERROR: $NAME already exists."
-
-    echo "# Making the appdir for $NAME"
-    mkdir -p "$APPDIR"
 
     for dist in "${DISTS[@]}"
     do
@@ -180,18 +195,18 @@ function _pau_cmd_pp {
 
     [[ -z "$output" ]] && output=$NAME
 
-    perlversion=$(perl -MConfig -e 'print $Config{version}')
-    pp  -I "$HOME/.local/pau/apps/$NAME/lib/perl5" \
-        -a "$HOME/.local/pau/apps/$NAME/lib/perl5/;$perlversion/" \
+    APPDIR="$HOME/.local/pau/apps/$NAME"
+    perlversion=$("$APPDIR/bin/perl" -MConfig -e "print \$Config{version}")
+    pp  -I "$APPDIR/lib/perl5" \
+        -a "$APPDIR/lib/perl5/;$perlversion/" \
         -o "$output" \
-        "$HOME/.local/pau/apps/$NAME/bin/$NAME" \
+        "$APPDIR/bin/$NAME" \
         && echo "DONE: $output"
 }
 
 function _pau_main {
     cmd=$1
     # main
-    PERL=$(which perl)
 
     case $cmd in
         install)
