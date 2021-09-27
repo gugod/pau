@@ -30,14 +30,15 @@ USAGE
 }
 
 function _pau_shim {
+    local APP APPDIR SHIM
+
     [[ -z "$1" ]] && _pau_die "ERROR: an app name is required"
 
     echo -n "# Creating shim... "
 
-    NAME=$1
-
-    APPDIR="$HOME/.local/pau/apps/$NAME"
-    SHIM="$HOME/.local/pau/shims/$NAME"
+    APP=$1
+    APPDIR="$HOME/.local/pau/apps/$APP"
+    SHIM="$HOME/.local/pau/shims/$APP"
 
     mkdir -p "$HOME/.local/pau/shims"
 
@@ -213,6 +214,8 @@ function _pau_cmd_pp {
 }
 
 function _pau_main {
+    local cmd
+
     cmd=$1
     # main
 
