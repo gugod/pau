@@ -18,7 +18,10 @@ Example:
     pau install perlfind
 
     # Installs mbtiny from App::ModuleBuildTiny
-    pau install -M App::ModuleBuildTiny mbtiny
+    pau install mbtiny -M App::ModuleBuildTiny
+
+    # Installs perlcritic with a few plugins
+    pau install perlcritic -M Perl::Critic -M Perl::Critic::Pulp -M Perl::Critic::TooMuchCode
 
     # List installed units
     pau list
@@ -119,6 +122,11 @@ function _pau_make_app_dir {
 function _pau_cmd_install {
     local APPDIR OPTIND DISTS o
 
+    NAME=$1
+    shift
+
+    [[ -z "$NAME" ]] && _pau_die "ERROR: an app name is required."
+
     DISTS=()
     while getopts M: o; do
           case "$o" in
@@ -132,10 +140,6 @@ function _pau_cmd_install {
     done
 
     shift $((OPTIND-1))
-
-    NAME=$1
-
-    [[ -z "$NAME" ]] && _pau_die "ERROR: an app name is required."
 
     [[ ${#DISTS} -eq 0 ]] && DISTS=("App::$NAME")
 
