@@ -104,7 +104,7 @@ function _pau_cmd_inject {
 }
 
 function _pau_make_app_dir {
-    local APP APPDIR
+    local APP
     APP=$1
     APPDIR="$HOME/.local/pau/apps/$APP"
 
@@ -115,8 +115,6 @@ function _pau_make_app_dir {
 
     mkdir -p "$APPDIR/bin/"
     ln -s "$(which perl)" "$APPDIR/bin/perl"
-
-    echo -n "$APPDIR"
 }
 
 function _pau_cmd_install {
@@ -143,17 +141,15 @@ function _pau_cmd_install {
 
     [[ ${#DISTS} -eq 0 ]] && DISTS=("App::$NAME")
 
-    APPDIR=$(_pau_make_app_dir "$NAME")
-
     [[ -e "$HOME/.local/bin/$NAME" ]] && _pau_die "ERROR: $HOME/.local/bin/$NAME already exists."
     [[ -f "$HOME/.local/pau/shims/$NAME" ]] && _pau_die "ERROR: $NAME already exists."
 
-
+    echo "# Installing $NAME"
+    _pau_make_app_dir "$NAME"
     for dist in "${DISTS[@]}"
     do
         _pau_inject_dist "$NAME" "$dist" || _pau_die "Failed to inject $dist"
     done
-
     _pau_shim "$NAME"
     _pau_link "$NAME"
 
