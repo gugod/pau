@@ -167,14 +167,14 @@ function _pau_cmd_delete {
     SHIM="$HOME/.local/pau/shims/$APP"
     LINK="$HOME/.local/bin/$APP"
 
-    [[ -d $APPDIR ]] || _pau_die "ERROR: $APPDIR does not exists."
-    [[ -f $SHIM ]] || _pau_die "ERROR: $SHIM does not exists."
-    [[ -L $LINK ]] || _pau_die "ERROR: $LINK is not managed by pau"
-    [[ $(readlink "$LINK") == "$SHIM" ]] || _pau_die "ERROR: $LINK is not managed by pau"
+    if [[ -e $LINK ]]
+    then
+        [[ -L $LINK ]] || _pau_die "ERROR: $LINK is not managed by pau"
+        [[ $(readlink "$LINK") == "$SHIM" ]] || _pau_die "ERROR: $LINK is not managed by pau"
+        rm "$LINK"
+    fi
 
-    rm "$LINK"
-    rm "$SHIM"
-    rm -rf "$APPDIR"
+    rm -rf "$SHIM" "$APPDIR"
 }
 
 function _pau_cmd_list {
