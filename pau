@@ -24,7 +24,7 @@ Example:
     pau install perlcritic -M Perl::Critic -M Perl::Critic::Pulp -M Perl::Critic::TooMuchCode
 
     # Inject (or upgrade) dependencies to perlcritic
-    pau inject perlcritic -M Perl::Critic::TooMuchCode
+    pau inject perlcritic Perl::Critic::TooMuchCode
 
     # List installed units
     pau list
