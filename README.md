@@ -78,25 +78,32 @@ Comparing to have one shared land of site_perl for all our libs,
 apps, tools and softwares, the approach of having isolated
 installation for each one has some pros:
 
-1. deletions becomes trivial
+1. deletions becomes trivial and safe
 2. upgrading one tool does not break others as a side-effect
 3. contention of dependencies can never occur in between apps
 
-Deleting stuff in site_perl is always a bit tricky, sometimes we are
-doing some cleaning the installation of app X, but ended up breaking
-software Y, because they happend to use the same module Z. If
-installations are isolated, there would be multiple copies of
+Deleting stuff inside site_perl has always been a bit tricky. There
+are tools for deleting individual modules X but its dependencies may
+not be recursively deleted. This is mostly due to lack of
+implementation but nonetheless it is what we have now.
+
+Even if there are tools to removes X and all its dependencies, doing
+so may break Y, because X and Y share a dependency Z which has to be
+kept in order to keep Y working.
+
+If all installations are isolated, there would be multiple copies of
 Z. Deleting X+Z would not effect Y+Z.
 
-Similarly, when we are upgrading X, Z might need to be upgraded
-together and that might break Y, if Z is shared.
+There is also an opposite of the same problem when it comes to
+upgrading things. When we are upgrading X, Z might need to be upgraded
+together and that might break Y.
 
 In a more subtle way, when installing X and Y, they might declare that
 they need different versions of Z. X might declare that it needs Z to
 be at exactly version 1.0, while Y might declare that it needs Z at
 least 2.0, which means X and Y cannot be installed together in the
-same sahred environment.
+same shared environment.
 
-The cons of this approach is that it requires more disk space and
-extra time when installing things, since installations always start
-from scratch.
+The cons of creating multilpe isolated installations approach is that
+it requires more disk space and extra time when installing things,
+since installations always start from scratch.
