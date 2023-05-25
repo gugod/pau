@@ -20,7 +20,7 @@ Here's a quick installer:
 
     curl -fsSL https://github.com/gugod/pau/raw/fun/pau > ~/.local/bin/pau \
         && chmod +x ~/.local/bin/pau
-    [ ! -e  ~/.local/bin/cpm ]
+    [ ! -e  ~/.local/bin/cpm ] \
         && curl -fsSL https://git.io/cpm > ~/.local/bin/cpm \
         && chmod +x  ~/.local/bin/cpm
 
