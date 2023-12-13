@@ -87,8 +87,12 @@ function _pau_inject_dist {
 
     APPDIR="$HOME/.local/pau/apps/$APP"
 
+    if [[ "$DIST" == "." ]]; then
+        DIST=$PWD
+    fi
+
     echo -n "# Injecting $DIST... "
-    cpm install -L "$APPDIR" "$DIST" >/dev/null 2>&1 || _pau_die
+    cpm install --show-build-log-on-failure -L "$APPDIR" $DIST 2>&1 || _pau_die
     echo "DONE"
 }
 
